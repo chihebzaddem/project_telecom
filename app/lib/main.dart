@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'tool_bar.dart';
+import 'navigate.dart';
 
 
 void main() {
@@ -15,6 +16,7 @@ class MyApp extends StatelessWidget {
       home: const HomePage(),
       routes: {
         '/second': (context) => const SecondPage(),
+        '/Navigate':(context) =>const Navigate(),
         
       },
     );
@@ -51,7 +53,7 @@ class HomePage extends StatelessWidget {
               width: 200,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/navigate');
+                  Navigator.pushNamed(context, '/Navigate');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00C8F4),
