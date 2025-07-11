@@ -1,0 +1,28 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String title;
+
+  const CustomAppBar({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text(title),
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 20.0),
+        child: SvgPicture.asset(
+          'assets/logo.svg',
+          height: 40,
+          width: 40,
+          fit: BoxFit.contain,
+        ),
+      ),
+      leadingWidth: 60,
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
