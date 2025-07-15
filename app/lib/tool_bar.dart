@@ -3,13 +3,19 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final List<Widget>? actions; // ✅ Allow optional custom buttons
 
-  const CustomAppBar({super.key, required this.title});
+  const CustomAppBar({
+    super.key,
+    required this.title,
+    this.actions,
+  });
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       title: Text(title),
+      actions: actions, // ✅ If null, nothing is shown
       leading: Padding(
         padding: const EdgeInsets.only(left: 20.0),
         child: SvgPicture.asset(

@@ -2,25 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'tool_bar.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Site Search',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const SearchPage(),
-    );
-  }
-}
-
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -57,33 +38,7 @@ class _SearchPageState extends State<SearchPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Buttons Row
-            Row(
-              children: [
-                SizedBox(
-                  width:100,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF9A01B),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('Search', style: TextStyle(fontSize: 26, color:Colors.black)),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width:100,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00C8F4),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('Navigate', style: TextStyle(fontSize: 26, color:Colors.black)),
-                  ),
-                ),
-              ],
-            ),
+            
 
             const SizedBox(height: 10),
 
@@ -126,8 +81,8 @@ class _SearchPageState extends State<SearchPage> {
                 ),
                 filled: true,
                 fillColor: Colors.grey[200],
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0, horizontal: 16),
               ),
             ),
 
@@ -170,7 +125,6 @@ class Site extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // SVG Image
             SvgPicture.asset(
               'assets/site.svg',
               height: 32,
@@ -178,8 +132,6 @@ class Site extends StatelessWidget {
               fit: BoxFit.contain,
             ),
             const SizedBox(width: 12),
-
-            // Text section
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,16 +139,12 @@ class Site extends StatelessWidget {
                   Text(
                     'ID: $siteId',
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Name: $siteName',
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),

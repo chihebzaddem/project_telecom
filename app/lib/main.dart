@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'search.dart';
 import 'tool_bar.dart';
 import 'navigate.dart';
+import 'admin.dart';
 
 
-void main() {
+void main()  {
+
   runApp(const MyApp());
 }
 
@@ -15,8 +18,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: const HomePage(),
       routes: {
-        '/second': (context) => const SecondPage(),
+        '/SearchPage': (context) => const SearchPage(),
         '/Navigate':(context) =>const Navigate(),
+        '/AdminScreen':(context) =>const AdminScreen(),
         
       },
     );
@@ -29,7 +33,23 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'Home'),
+      appBar: CustomAppBar(
+  title: 'Home',
+  actions: [
+    TextButton(
+      onPressed: () {
+        Navigator.pushNamed(context, '/search');
+      },
+      child: const Text('Search', style: TextStyle(color: Colors.white)),
+    ),
+    TextButton(
+      onPressed: () {
+        Navigator.pushNamed(context, '/Navigate');
+      },
+      child: const Text('Navigate', style: TextStyle(color: Colors.white)),
+    ),
+  ],
+),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -38,7 +58,7 @@ class HomePage extends StatelessWidget {
               width: 200,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/second');
+                  Navigator.pushNamed(context, '/SearchPage');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF9A01B),
@@ -64,6 +84,22 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 20),
+               SizedBox(
+              width: 200,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/AdminScreen');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00C8F4),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                child: const Text('admin', style:TextStyle(fontSize:28,),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -71,16 +107,3 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class SecondPage extends StatelessWidget {
-  const SecondPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: 'Second Page'),
-      body: const Center(
-        child: Text('This is another page with the same app bar'),
-      ),
-    );
-  }
-}
