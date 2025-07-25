@@ -28,16 +28,17 @@ class _ArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()
-      ..color = color.withAlpha((255 * 0.5).toInt())
+      ..color = color.withAlpha((255 * 0.5).toInt())  // 50% opacity
       ..style = PaintingStyle.fill;
 
     final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height);
 
+    // Draw arc from -30° to +30° (60° sweep)
     canvas.drawArc(
       rect,
-      -30 * pi / 180, // Start at -15° to center around 0°
-       60 * pi / 180,  // Sweep 30°
-      true,
+      -30 * pi / 180,  // start angle in radians
+      60 * pi / 180,   // sweep angle in radians
+      true,            // use center to fill sector shape
       paint,
     );
   }

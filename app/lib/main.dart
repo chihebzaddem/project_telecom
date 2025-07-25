@@ -3,6 +3,7 @@ import 'search.dart';
 import 'tool_bar.dart';
 import 'navigate.dart';
 import 'admin.dart';
+import 'details.dart';
 
 
 void main()  {
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
         '/SearchPage': (context) => const SearchPage(),
         '/Navigate':(context) =>const Navigate(),
         '/AdminScreen':(context) =>const AdminScreen(),
+        
         
       },
     );

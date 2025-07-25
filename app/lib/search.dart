@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'tool_bar.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'details.dart';
+
+class TelecomSite {
+  final String id;
+  final String siteName;
+  final LatLng location;
+  final List<int> azimuths;
+
+  TelecomSite(this.id, this.siteName, this.location, this.azimuths);
+}
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -13,36 +24,30 @@ class _SearchPageState extends State<SearchPage> {
   String _searchText = '';
   String _filterBy = 'Site ID';
 
-  final List<Map<String, String>> _allSites = [
-    {'siteId': '17xxxx', 'siteName': 'Site XYZ'},
-    {'siteId': '18abcd', 'siteName': '4G5G Kairouan'},
-    {'siteId': '19efgh', 'siteName': 'Tunis Center'},
+  final List<TelecomSite> telecomSites = [
+    TelecomSite('172002', "Site A", LatLng(35.6818, 10.1005), [20, 90, 170]),
+    TelecomSite('232465', "XYZ Site", LatLng(35.6886, 10.0961), [0, 90, 180, 270]),
+    TelecomSite('300000', "Site C", LatLng(35.6792, 10.1000), [0, 120, 240]),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> filteredSites = _allSites.where((site) {
+    final filteredSites = telecomSites.where((site) {
       final query = _searchText.toLowerCase();
       if (_filterBy == 'Site ID') {
-        return site['siteId']!.toLowerCase().contains(query);
+        return site.id.toLowerCase().contains(query);
       } else {
-        return site['siteName']!.toLowerCase().contains(query);
+        return site.siteName.toLowerCase().contains(query);
       }
     }).toList();
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'Search'),
+      appBar: AppBar(title: const Text('Search')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Buttons Row
-            
-
-            const SizedBox(height: 10),
-
-            // Filter dropdown
+            // Filter dropdown row
             Row(
               children: [
                 const Text("Filter by: ", style: TextStyle(fontSize: 16)),
@@ -64,7 +69,7 @@ class _SearchPageState extends State<SearchPage> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
 
             // Search bar
             TextField(
@@ -81,22 +86,31 @@ class _SearchPageState extends State<SearchPage> {
                 ),
                 filled: true,
                 fillColor: Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(
-                    vertical: 0, horizontal: 16),
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // Site results list
             Expanded(
-              child: ListView(
-                children: filteredSites.map((site) {
-                  return Site(
-                    siteId: site['siteId']!,
-                    siteName: site['siteName']!,
+              child: ListView.builder(
+                itemCount: filteredSites.length,
+                itemBuilder: (context, index) {
+                  final site = filteredSites[index];
+                  return SiteCard(
+                    site: site,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetailsPage(  id: site.id,
+                                                              name: site.siteName,
+                                                              location: site.location,
+                                                              angles: site.azimuths,),
+                        ),
+                      );
+                    },
                   );
-                }).toList(),
+                },
               ),
             ),
           ],
@@ -106,50 +120,51 @@ class _SearchPageState extends State<SearchPage> {
   }
 }
 
-class Site extends StatelessWidget {
-  final String siteId;
-  final String siteName;
+class SiteCard extends StatelessWidget {
+  final TelecomSite site;
+  final VoidCallback onTap;
 
-  const Site({
+  const SiteCard({
     super.key,
-    required this.siteId,
-    required this.siteName,
+    required this.site,
+    required this.onTap,
   });
 
-  @override
+   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SvgPicture.asset(
-              'assets/site.svg',
-              height: 32,
-              width: 32,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ID: $siteId',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Name: $siteName',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              SvgPicture.asset(
+                'assets/site.svg',
+                height: 32,
+                width: 32,
               ),
-            )
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ID: ${site.id}',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Name: ${site.siteName}',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
