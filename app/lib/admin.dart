@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 
@@ -1002,5 +1002,651 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         ),
       ],
     );
+  }
+}*/
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+
+class AdminScreen extends StatefulWidget {
+  const AdminScreen({super.key});
+
+  @override
+  State<AdminScreen> createState() => _AdminScreenState();
+}
+
+class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<SitesProvider>(context, listen: false).loadInitialData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sitesProvider = Provider.of<SitesProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(
+        title: const Text('Telecom Site Management'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              authProvider.logout();
+              Navigator.of(context).pushReplacementNamed('/login');
+            },
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          onTap: (index) {
+            final types = ['2G', '3G', '4G'];
+            sitesProvider.setNetworkType(types[index]);
+          },
+          tabs: const [
+            Tab(text: '2G'),
+            Tab(text: '3G'),
+            Tab(text: '4G'),
+          ],
+        ),
+      ),
+      body: sitesProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.toLowerCase();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Search Sites',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildSiteListView('2G'),
+                      _buildSiteListView('3G'),
+                      _buildSiteListView('4G'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'import',
+            onPressed: _showImportDialog,
+            mini: true,
+            child: const Icon(Icons.upload_file),
+            tooltip: 'Import from Excel',
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton(
+            heroTag: 'add',
+            onPressed: () => _showAddEditDialog(context, null),
+            child: const Icon(Icons.add),
+            tooltip: 'Add new site',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSiteListView(String networkType) {
+    return Consumer<SitesProvider>(
+      builder: (context, provider, _) {
+        final sites = provider.getSitesByType(networkType);
+        final fieldNames = provider.getFieldNames(networkType);
+
+        // Filter sites based on search query
+        final filteredSites = sites.where((site) {
+          return site[fieldNames[0]]?.toString().toLowerCase().contains(_searchQuery) ?? false;
+        }).toList();
+
+        if (filteredSites.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('No sites found'),
+                TextButton(
+                  onPressed: _showImportDialog,
+                  child: const Text('Import from Excel'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(8),
+          itemCount: filteredSites.length,
+          itemBuilder: (context, index) {
+            final site = filteredSites[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: ListTile(
+                title: Text(site[fieldNames[0]]?.toString() ?? 'Unnamed Site'),
+                subtitle: Text('ID: ${site[fieldNames[1]]?.toString() ?? 'N/A'}'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _showAddEditDialog(context, index),
+                      tooltip: 'Edit',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _confirmDelete(context, index),
+                      tooltip: 'Delete',
+                    ),
+                  ],
+                ),
+                onTap: () => _showSiteDetails(context, site, fieldNames),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSiteDetails(BuildContext context, Map<String, dynamic> site, List<String> fields) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(site[fields[0]]?.toString() ?? 'Site Details'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: fields.map((field) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(context).style,
+                      children: [
+                        TextSpan(
+                          text: '$field: ',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: site[field]?.toString() ?? 'N/A'),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showImportDialog() {
+    final provider = Provider.of<SitesProvider>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Import Sites'),
+          content: const Text('Select an Excel file to import sites'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                final success = await provider.importSitesFromExcel();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success 
+                          ? 'Sites imported successfully' 
+                          : 'Failed to import sites',
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Import'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAddEditDialog(BuildContext context, int? index) {
+    final provider = Provider.of<SitesProvider>(context, listen: false);
+    final isEditing = index != null;
+    final networkType = provider.currentNetworkType;
+    final sites = provider.getSitesByType(networkType);
+    final site = isEditing ? sites[index] : {};
+    final fieldNames = provider.getFieldNames(networkType);
+    
+    final controllers = Map.fromIterables(
+      fieldNames,
+      fieldNames.map((field) => 
+        TextEditingController(text: site[field]?.toString() ?? '')),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isEditing ? 'Edit Site' : 'Add New Site'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: fieldNames.map((field) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: TextField(
+                    controller: controllers[field],
+                    decoration: InputDecoration(
+                      labelText: field,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newSite = Map<String, String>.fromIterables(
+                  fieldNames,
+                  fieldNames.map((field) => controllers[field]!.text),
+                );
+
+                try {
+                  if (isEditing) {
+                    await provider.updateSite(networkType, index, newSite);
+                  } else {
+                    await provider.addSite(networkType, newSite);
+                  }
+                  
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isEditing 
+                              ? 'Site updated successfully' 
+                              : 'Site added successfully',
+                        ),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
+              child: Text(isEditing ? 'Update' : 'Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDelete(BuildContext context, int index) {
+    final provider = Provider.of<SitesProvider>(context, listen: false);
+    final networkType = provider.currentNetworkType;
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content: const Text('Are you sure you want to delete this site?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  await provider.deleteSite(networkType, index);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Site deleted successfully')),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class SitesProvider with ChangeNotifier {
+  final Map<String, List<Map<String, dynamic>>> _sites = {
+    '2G': [],
+    '3G': [],
+    '4G': [],
+  };
+  
+  String _currentNetworkType = '2G';
+  bool _isLoading = false;
+
+  String get currentNetworkType => _currentNetworkType;
+  bool get isLoading => _isLoading;
+  
+  List<Map<String, dynamic>> getSitesByType(String type) {
+    return _sites[type] ?? [];
+  }
+
+  void setNetworkType(String type) {
+    _currentNetworkType = type;
+    notifyListeners();
+  }
+
+  Future<void> loadInitialData() async {
+    if (kIsWeb) return;
+    
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      
+      for (final type in _sites.keys) {
+        final path = '${appDocDir.path}/${type}_sites.xlsx';
+        if (await File(path).exists()) {
+          await _loadExcelData(path, type);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading initial data: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> _loadExcelData(String path, String networkType) async {
+    try {
+      final bytes = File(path).readAsBytesSync();
+      final excel = Excel.decodeBytes(bytes);
+      final table = excel.tables.keys.first;
+      final rows = excel.tables[table]?.rows ?? [];
+      
+      if (rows.isNotEmpty) {
+        final headers = rows[0].map((cell) => cell?.value.toString() ?? '').toList();
+        final data = rows.sublist(1).map((row) {
+          return Map.fromIterables(
+            headers,
+            row.map((cell) => cell?.value.toString() ?? ''),
+          );
+        }).toList();
+        
+        _sites[networkType] = data;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error loading Excel data: $e');
+    }
+  }
+
+  Future<bool> importSitesFromExcel() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['xlsx'],
+      );
+
+      if (result != null) {
+        final filePath = result.files.single.path!;
+        final bytes = File(filePath).readAsBytesSync();
+        final excel = Excel.decodeBytes(bytes);
+        final table = excel.tables.keys.first;
+        final rows = excel.tables[table]?.rows ?? [];
+
+        if (rows.isNotEmpty) {
+          final headers = rows[0].map((cell) => cell?.value.toString() ?? '').toList();
+          final importedSites = rows.sublist(1).map((row) {
+            return Map.fromIterables(
+              headers,
+              row.map((cell) => cell?.value.toString() ?? ''),
+            );
+          }).toList();
+
+          _sites[_currentNetworkType]?.addAll(importedSites);
+          await _saveToExcel(_currentNetworkType);
+          notifyListeners();
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error importing sites: $e');
+      return false;
+    }
+  }
+
+  Future<void> addSite(String networkType, Map<String, dynamic> site) async {
+    _sites[networkType]?.add(site);
+    await _saveToExcel(networkType);
+    notifyListeners();
+  }
+
+  Future<void> updateSite(String networkType, int index, Map<String, dynamic> updatedSite) async {
+    _sites[networkType]?[index] = updatedSite;
+    await _saveToExcel(networkType);
+    notifyListeners();
+  }
+
+  Future<void> deleteSite(String networkType, int index) async {
+    _sites[networkType]?.removeAt(index);
+    await _saveToExcel(networkType);
+    notifyListeners();
+  }
+
+  Future<void> _saveToExcel(String networkType) async {
+    if (kIsWeb) return;
+
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final path = '${appDocDir.path}/${networkType}_sites.xlsx';
+      final excel = Excel.createExcel();
+      final sheet = excel['Sites'];
+
+      final sites = _sites[networkType] ?? [];
+      if (sites.isNotEmpty) {
+        sheet.appendRow(sites.first.keys.toList());
+        for (final site in sites) {
+          sheet.appendRow(site.values.toList());
+        }
+
+        await File(path)
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(excel.encode()!);
+      }
+    } catch (e) {
+      debugPrint('Error saving Excel file: $e');
+    }
+  }
+
+  List<String> getFieldNames(String networkType) {
+    switch (networkType) {
+      case '2G':
+        return [
+          'BscName',
+          'GeranCellId',
+          'cId',
+          'Bsic',
+          'bcchNo',
+          'lac',
+          'state',
+          'cSysType',
+          'irc',
+          'xRange',
+          'bcchType',
+          'SiteName',
+          '3GID',
+          'LAT', 
+          'LONG',
+          'Azimuth',
+          'sector',
+          'dchNo'
+        ];
+      case '3G':
+        return [
+          'RNC_Name',
+          '3GSiteName', 
+          '3GSiteID',
+          'UtranCellId',
+          'Sector',
+          'Sector_index',
+          'cId',
+          'primaryCpichPower',
+          'primaryScramblingCode',
+          'uarfcnDl',
+          'uarfcnUl',
+          'userLabel',
+          'Lac', 
+          'Rac',
+          'LAT',
+          'LONG',
+          'AZIMUTH',
+          'P_SiteName',
+          'administrativeState',
+          'operationalState',
+          'Ura',
+          'maximumTransmissionPower',
+          'NodeId',
+          'LogicalSite',
+          'Region'
+        ];
+      case '4G':
+        return [
+          'NodeId_x',
+          'SiteID_x',
+          'eNBId',
+          'EUtranCellFDDId',
+          'Cell_Name',
+          'cellId',
+          'ECGI',
+          'physicalLayerCellId',
+          'freqBand',
+          'earfcndl',
+          'dlChannelBandwidth',
+          'tac',
+          'SectorCarrierId',
+          'noOfTxAntennas',
+          'SectorID',
+          'Sector_index',
+          'LAT',
+          'LONG',
+          'AZIMUTH',
+          'Site_Name',
+          'administrativeState',
+          'operationalState'
+        ];
+      default:
+        return [];
+    }
+  }
+}
+
+class AuthProvider with ChangeNotifier {
+  String? _username;
+  bool _isLoading = false;
+
+  String? get username => _username;
+  bool get isLoading => _isLoading;
+  bool get isAuthenticated => _username != null;
+
+  Future<bool> login(String username, String password) async {
+    _isLoading = true;
+    notifyListeners();
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (username == 'admin' && password == 'admin123') {
+      _username = username;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  void logout() {
+    _username = null;
+    notifyListeners();
   }
 }
