@@ -19,6 +19,10 @@ dependencies:
   provider: ^6.1.1 
   url_launcher: ^6.2.5
   flutter_map_marker_popup: ^6.1.2
+  excel: 2.1.0
+  open_file: ^3.3.1
+  file_picker: ^10.2.0
+  path_provider: ^2.1.5
 
   
 
