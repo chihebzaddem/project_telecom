@@ -109,12 +109,17 @@ class HomePage extends StatelessWidget {
   }
 }*/
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'search.dart';
 import 'tool_bar.dart';
 import 'navigate.dart';
 import 'admin.dart';
 import 'details.dart';
-import 'prenavigate.dart'; // ✅ Add this import
+import 'prenavigate.dart';
+
+// Import your providers and auth classes here:
+import 'app.dart'; // Assuming AuthProvider, SitesProvider are here
 
 void main() {
   runApp(const MyApp());
@@ -129,9 +134,7 @@ class MyApp extends StatelessWidget {
       home: const HomePage(),
       routes: {
         '/SearchPage': (context) => const SearchPage(),
-        
-        '/Prenavigate': (context) => const PreNavigatePage(), // ✅ Route added
-        //'/AdminScreen': (context) => const AdminScreen(), // ✅ Added if needed
+        '/Prenavigate': (context) => const PreNavigatePage(),
       },
     );
   }
@@ -198,7 +201,11 @@ class HomePage extends StatelessWidget {
               width: 200,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/AdminScreen');
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AdminAppWrapper(),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00C8F4),
@@ -210,6 +217,39 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// This widget wraps the admin flow with providers/auth and routing
+class AdminAppWrapper extends StatelessWidget {
+  const AdminAppWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => SitesProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Admin Portal',
+        theme: ThemeData(
+          primaryColor: const Color.fromARGB(255, 8, 113, 165),
+          hintColor: const Color(0xFF005B8C),
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          textTheme: const TextTheme(
+            bodyLarge: TextStyle(color: Colors.black),
+            bodyMedium: TextStyle(color: Colors.black),
+          ),
+        ),
+        initialRoute: '/login',
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/admin': (context) => const AdminScreen(),
+        },
       ),
     );
   }
