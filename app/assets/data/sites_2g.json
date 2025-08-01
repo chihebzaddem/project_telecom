@@ -15,7 +15,7 @@
         "3GID": "3G001",
         "LAT": 35.6781,
         "LONG": 10.1003,
-        "Azimuth": 60,
+        "Azimuth": [90,180,20],
         "sector": "A",
         "dchNo": 3
     },
@@ -35,7 +35,7 @@
         "3GID": "3G002",
         "LAT": 35.6792,
         "LONG": 10.1011,
-        "Azimuth": 90,
+        "Azimuth": [90,180,20],
         "sector": "B",
         "dchNo": 2
     },
@@ -55,7 +55,7 @@
         "3GID": "3G003",
         "LAT": 35.6803,
         "LONG": 10.1022,
-        "Azimuth": 120,
+        "Azimuth": [90,180,20],
         "sector": "C",
         "dchNo": 4
     },
@@ -75,7 +75,7 @@
         "3GID": "3G004",
         "LAT": 35.6814,
         "LONG": 10.1033,
-        "Azimuth": 150,
+        "Azimuth": [90,180,20],
         "sector": "A",
         "dchNo": 1
     },
@@ -95,7 +95,7 @@
         "3GID": "3G005",
         "LAT": 35.6825,
         "LONG": 10.1044,
-        "Azimuth": 180,
+        "Azimuth": [90,180,20],
         "sector": "B",
         "dchNo": 5
     }

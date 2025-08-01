@@ -18,7 +18,7 @@
         "Sector_index": 0,
         "LAT": 35.6782,
         "LONG": 10.0962,
-        "AZIMUTH": 0,
+        "AZIMUTH": [90,180,20],
         "Site_Name": "KAI-4G-Central",
         "administrativeState": "UNLOCKED",
         "operationalState": "ENABLED"
@@ -42,7 +42,7 @@
         "Sector_index": 1,
         "LAT": 35.6719,
         "LONG": 10.0983,
-        "AZIMUTH": 120,
+        "AZIMUTH": [90,180,20],
         "Site_Name": "KAI-4G-East",
         "administrativeState": "UNLOCKED",
         "operationalState": "ENABLED"
@@ -66,7 +66,7 @@
         "Sector_index": 2,
         "LAT": 35.6881,
         "LONG": 10.1225,
-        "AZIMUTH": 240,
+        "AZIMUTH": [90,180,20],
         "Site_Name": "KAI-4G-West",
         "administrativeState": "UNLOCKED",
         "operationalState": "ENABLED"

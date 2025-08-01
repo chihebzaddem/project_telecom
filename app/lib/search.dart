@@ -199,9 +199,9 @@ class _SearchPageState extends State<SearchPage> {
   String _searchText = '';
   String _filterBy = 'Site ID';
 
-  bool _show2G = false;
-  bool _show3G = false;
-  bool _show4G = false;
+  bool _show2G = true;
+  bool _show3G = true;
+  bool _show4G = true;
 
   List<TelecomSite> telecomSites = [];
 
@@ -220,42 +220,59 @@ class _SearchPageState extends State<SearchPage> {
     final List<dynamic> data3g = json.decode(sites3g);
     final List<dynamic> data4g = json.decode(sites4g);
 
+    double? parseDouble(dynamic val) {
+      if (val == null) return null;
+      if (val is double) return val;
+      if (val is int) return val.toDouble();
+      if (val is String) return double.tryParse(val);
+      return null;
+    }
+
     List<TelecomSite> parsed = [];
 
     for (var site in data2g) {
+      final lat = parseDouble(site['LAT']);
+      final lng = parseDouble(site['LONG']);
+      if (lat == null || lng == null) continue;
       parsed.add(
         TelecomSite(
-          site['GeranCellId'] ?? 'Unknown',
+          site['GeranCellId']?.toString() ?? 'Unknown',
           site['SiteName'] ?? 'Unnamed',
           '2G',
-          LatLng(site['LAT'], site['LONG']),
-          [site['Azimuth'] ?? 0],
+          LatLng(lat, lng),
+          [site['Azimuth'] is int ? site['Azimuth'] : int.tryParse(site['Azimuth']?.toString() ?? '') ?? 0],
           site,
         ),
       );
     }
 
     for (var site in data3g) {
+      final lat = parseDouble(site['LAT']);
+      final lng = parseDouble(site['LONG']);
+      if (lat == null || lng == null) continue;
       parsed.add(
         TelecomSite(
-          site['3GSiteID'] ?? 'Unknown',
+          site['3GSiteID']?.toString() ?? 'Unknown',
           site['3GSiteName'] ?? 'Unnamed',
           '3G',
-          LatLng(site['LAT'], site['LONG']),
-          [site['AZIMUTH'] ?? 0],
+          LatLng(lat, lng),
+          [site['AZIMUTH'] is int ? site['AZIMUTH'] : int.tryParse(site['AZIMUTH']?.toString() ?? '') ?? 0],
           site,
         ),
       );
     }
 
     for (var site in data4g) {
+      final lat = parseDouble(site['LAT']);
+      final lng = parseDouble(site['LONG']);
+      if (lat == null || lng == null) continue;
       parsed.add(
         TelecomSite(
-          site['eNBId'].toString(),
+          site['eNBId']?.toString() ?? 'Unknown',
           site['Site_Name'] ?? 'Unnamed',
           '4G',
-          LatLng(site['LAT'], site['LONG']),
-          [site['AZIMUTH'] ?? 0],
+          LatLng(lat, lng),
+          [site['AZIMUTH'] is int ? site['AZIMUTH'] : int.tryParse(site['AZIMUTH']?.toString() ?? '') ?? 0],
           site,
         ),
       );
@@ -345,68 +362,69 @@ class _SearchPageState extends State<SearchPage> {
             const SizedBox(height: 10),
 
             // Network type filter buttons
-          Row(
-            children: [
-              Expanded(
-                child: FilterToggleButton(
-                  label: '2G',
-                  isSelected: _show2G,
-                  onTap: () {
-                    setState(() {
-                      _show2G = !_show2G;
-                    });
-                  },
+            Row(
+              children: [
+                Expanded(
+                  child: FilterToggleButton(
+                    label: '2G',
+                    isSelected: _show2G,
+                    onTap: () {
+                      setState(() {
+                        _show2G = !_show2G;
+                      });
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilterToggleButton(
-                  label: '3G',
-                  isSelected: _show3G,
-                  onTap: () {
-                    setState(() {
-                      _show3G = !_show3G;
-                    });
-                  },
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilterToggleButton(
+                    label: '3G',
+                    isSelected: _show3G,
+                    onTap: () {
+                      setState(() {
+                        _show3G = !_show3G;
+                      });
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilterToggleButton(
-                  label: '4G',
-                  isSelected: _show4G,
-                  onTap: () {
-                    setState(() {
-                      _show4G = !_show4G;
-                    });
-                  },
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilterToggleButton(
+                    label: '4G',
+                    isSelected: _show4G,
+                    onTap: () {
+                      setState(() {
+                        _show4G = !_show4G;
+                      });
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-
+              ],
+            ),
 
             const SizedBox(height: 16),
 
             // List of sites
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredSites.length,
-                itemBuilder: (context, index) {
-                  final site = filteredSites[index];
-                  return SiteCard(
-                    site: site,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DetailsPage(rawData: site.rawData),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+              child: filteredSites.isEmpty
+                  ? const Center(child: Text('No sites found'))
+                  : ListView.builder(
+                      itemCount: filteredSites.length,
+                      itemBuilder: (context, index) {
+                        final site = filteredSites[index];
+                        return SiteCard(
+                          site: site,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailsPage(rawData: site.rawData),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
             ),
           ],
         ),
