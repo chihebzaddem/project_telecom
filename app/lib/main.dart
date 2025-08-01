@@ -4,12 +4,21 @@ import 'tool_bar.dart';
 import 'navigate.dart';
 import 'admin.dart';
 import 'details.dart';
+import 'app.dart';
+import 'package:provider/provider.dart';
 
-
-void main()  {
-
-  runApp(const MyApp());
+void main() {
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SitesProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -21,7 +30,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/SearchPage': (context) => const SearchPage(),
         '/Navigate':(context) =>const Navigate(),
-        '/AdminScreen':(context) =>const AdminScreen(),
+        '/login': (context) => const LoginScreen(), 
+        '/admin': (context) => const AdminScreen(),
         
         
       },
@@ -91,7 +101,7 @@ class HomePage extends StatelessWidget {
               width: 200,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/AdminScreen');
+                  Navigator.pushNamed(context, '/login');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00C8F4),
