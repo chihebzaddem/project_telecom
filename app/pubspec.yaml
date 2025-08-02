@@ -23,6 +23,8 @@ dependencies:
   open_file: ^3.3.1
   file_picker: ^10.2.0
   path_provider: ^2.1.5
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
 
   
 
